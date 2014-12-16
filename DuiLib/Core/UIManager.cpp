@@ -2305,7 +2305,7 @@ namespace DuiLib {
         return;
     }
 
-    int CPaintManagerUI::LoadRes(LPCWSTR pstrFilename,  BYTE** pVoid )
+    int CPaintManagerUI::LoadRes(LPCTSTR pstrFilename,  BYTE** pVoid )
     {
         if (s_ResourceLoader)
         {
@@ -2329,7 +2329,7 @@ namespace DuiLib {
         }
         return 0;
     }
-    int CPaintManagerUI::LoadResourceFromFile( LPCWSTR pstrFilename, BYTE** pVoid )
+    int CPaintManagerUI::LoadResourceFromFile( LPCTSTR pstrFilename, BYTE** pVoid )
     {
         CDuiString sFile = CPaintManagerUI::GetResourcePath();    
         int nSize = 0;
@@ -2355,7 +2355,7 @@ namespace DuiLib {
         return (int)dwSize;
     }
 
-    int CPaintManagerUI::LoadResourceFromZip( LPCWSTR pstrFilename, BYTE** pVoid )
+    int CPaintManagerUI::LoadResourceFromZip( LPCTSTR pstrFilename, BYTE** pVoid )
     {
         CDuiString sFile = CPaintManagerUI::GetResourcePath();
         int nSize = 0;    

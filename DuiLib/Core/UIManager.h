@@ -152,7 +152,7 @@ public:
 /////////////////////////////////////////////////////////////////////////////////////
 //
 typedef CControlUI* (*LPCREATECONTROL)(LPCTSTR pstrType);
-typedef std::function<int(LPCWSTR, BYTE**)> Func_LoadResource;
+typedef std::function<int(LPCTSTR, BYTE**)> Func_LoadResource;
 
 class UILIB_API CPaintManagerUI
 {
@@ -201,9 +201,9 @@ public:
     static void SetCurrentPath(LPCTSTR pStrPath);
     static void SetResourceDll(HINSTANCE hInst);
     static void SetResourceLoader(Func_LoadResource);
-    static int LoadRes(LPCWSTR, BYTE** pVoid);
-    static int LoadResourceFromFile(LPCWSTR, BYTE** pVoid);
-    static int LoadResourceFromZip(LPCWSTR, BYTE** pVoid);
+    static int LoadRes(LPCTSTR, BYTE** pVoid);
+    static int LoadResourceFromFile(LPCTSTR, BYTE** pVoid);
+    static int LoadResourceFromZip(LPCTSTR, BYTE** pVoid);
     static void SetResourcePath(LPCTSTR pStrPath);
 	static void SetResourceZip(LPVOID pVoid, unsigned int len);
     static void SetResourceZip(LPCTSTR pstrZip, bool bCachedResourceZip = false);
