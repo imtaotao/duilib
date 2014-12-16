@@ -1,7 +1,7 @@
 # cmake file for duilib
 #Author Qi Gao(monkgau@gmail.com)
 #Created: 2012/09/16
-
+ 
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} Root_src)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/Control Control_src)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/Core Core_src)
