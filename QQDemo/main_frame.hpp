@@ -28,7 +28,11 @@ public:
 
     DWORD GetBkColor();
     void SetBkColor(DWORD dwBackColor);
-
+    LRESULT OnKeyDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+    {
+        bHandled = FALSE;
+        return 0;
+    }
 protected:	
 
 	void Notify(TNotifyUI& msg);

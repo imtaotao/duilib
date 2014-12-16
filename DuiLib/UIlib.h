@@ -26,7 +26,7 @@
 // WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+#ifndef UILIB_LIB
 #if defined(UILIB_EXPORTS)
 #if defined(_MSC_VER)
 #define UILIB_API __declspec(dllexport)
@@ -40,7 +40,9 @@
 #define UILIB_API 
 #endif
 #endif
-
+#else
+#define UILIB_API 
+#endif
 #define UILIB_COMDAT __declspec(selectany)
 
 #if defined _M_IX86
@@ -103,5 +105,5 @@
 
 #include "Control/UIActiveX.h"
 #include "Control/UIWebBrowser.h"
-//#include "Control/UIFlash.h"
+#include "Control/UIFlash.h"
 

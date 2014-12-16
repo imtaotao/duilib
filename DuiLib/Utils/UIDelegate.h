@@ -2,16 +2,17 @@
 #define __UIDELEGATE_H__
 
 #pragma once
-
-namespace DuiLib {
-
+#include <functional>
+namespace DuiLib {    
+    typedef std::function<bool(void*)> Func_Delegate;
+    class CEventSource;
 class UILIB_API CDelegateBase	 
 {
 public:
     CDelegateBase(void* pObject, void* pFn);
     CDelegateBase(const CDelegateBase& rhs);
     virtual ~CDelegateBase();
-    bool Equals(const CDelegateBase& rhs) const;
+    virtual bool Equals(const CDelegateBase* rhs) const;
     bool operator() (void* param);
     virtual CDelegateBase* Copy() const = 0; // add const for gcc
 
@@ -61,6 +62,45 @@ private:
     Fn m_pFn;
 };
 
+class CDelegateFunc : public CDelegateBase
+{    
+    friend class CEventSource;
+public:
+    CDelegateFunc(Func_Delegate func, int nId) 
+        : CDelegateBase(NULL, NULL)
+        , m_pFn(func)
+        , m_nId(nId)
+    {
+
+    }
+    CDelegateFunc(const CDelegateFunc& rhs)
+        : CDelegateBase(NULL, NULL)
+    {
+        m_pFn = rhs.m_pFn; 
+        m_nId = rhs.m_nId;
+    } 
+    virtual CDelegateBase* Copy() const
+    {
+        return new CDelegateFunc(*this);
+    }
+    virtual bool Equals(const CDelegateBase* rhs) const
+    {
+        const CDelegateFunc*pR = dynamic_cast<const CDelegateFunc*>(rhs);
+        if(!pR) return false;
+        return m_nId == pR->m_nId;
+    }
+protected:
+    virtual bool Invoke(void* param)
+    {
+        if(!m_pFn) return true;
+        return m_pFn(param); 
+    }  
+
+private:
+    Func_Delegate m_pFn;
+    int m_nId;
+};
+
 template <class O, class T>
 CDelegate<O, T> MakeDelegate(O* pObject, bool (T::* pFn)(void*))
 {
@@ -72,6 +112,11 @@ inline CDelegateStatic MakeDelegate(bool (*pFn)(void*))
     return CDelegateStatic(pFn); 
 }
 
+inline CDelegateFunc MakeDelegate(Func_Delegate func, int nId)
+{
+    return CDelegateFunc(func, nId); 
+}
+
 class UILIB_API CEventSource
 {
     typedef bool (*FnType)(void*);
@@ -80,9 +125,15 @@ public:
     operator bool();
     void operator+= (const CDelegateBase& d); // add const for gcc
     void operator+= (FnType pFn);
+    void operator+= (CDelegateFunc pFn);
     void operator-= (const CDelegateBase& d);
     void operator-= (FnType pFn);
+    void operator-= (CDelegateFunc pFn);
+    void RemoveById(int);
     bool operator() (void* param);
+protected:
+    void Add(const CDelegateBase* d);
+    void Remove(const CDelegateBase* d);
 
 protected:
     CStdPtrArray m_aDelegates;

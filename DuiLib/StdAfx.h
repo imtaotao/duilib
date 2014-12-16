@@ -49,7 +49,7 @@
 
 // Required for VS 2008 (fails on XP and Win2000 without this fix)
 #ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0500
+#define _WIN32_WINNT 0x0501
 #endif
 
 #include "UIlib.h"
@@ -60,6 +60,25 @@
 #define MAX max
 #define MIN min
 #define CLAMP(x,a,b) (MIN(b,MAX(a,x)))
+
+#include <windows.h>
+#include <atlbase.h>
+#include <atlstr.h>
+#include <atltypes.h>
+#include <Windows.h>
+#include <windowsx.h>
+#include <atlbase.h>
+#include <wtl/atlapp.h>
+#include <wtl/atlmisc.h>
+#include <atltypes.h>
+#include <atlutil.h>
+#include <wtl/atlctrls.h>
+#include <wtl/atlctrlw.h>
+#include <wtl/atldlgs.h>
+#include <wtl/atlframe.h>
+#include <atltime.h>
+#include <atlsync.h>
+
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.

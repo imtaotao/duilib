@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "UIEdit.h"
-
+#include <wtl/atlgdi.h>
 namespace DuiLib
 {
 	class CEditWnd : public CWindowWnd
@@ -14,15 +14,14 @@ namespace DuiLib
 		LPCTSTR GetWindowClassName() const;
 		LPCTSTR GetSuperClassName() const;
 		void OnFinalMessage(HWND hWnd);
-
 		LRESULT HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 		LRESULT OnEditChanged(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-
+        LRESULT OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled); 
 	protected:
 		CEditUI* m_pOwner;
 		HBRUSH m_hBkBrush;
-		bool m_bInit;
+		bool m_bInit;        
 	};
 
 
@@ -47,11 +46,24 @@ namespace DuiLib
 		SetWindowFont(m_hWnd, hFont, TRUE);
 		Edit_LimitText(m_hWnd, m_pOwner->GetMaxChar());
 		if( m_pOwner->IsPasswordMode() ) Edit_SetPasswordChar(m_hWnd, m_pOwner->GetPasswordChar());
-		Edit_SetText(m_hWnd, m_pOwner->GetText());
+        CDuiString strText = m_pOwner->GetText();
+		Edit_SetText(m_hWnd, strText);
+        if (!strText.IsEmpty())
+        {
+            if (m_pOwner->m_nSelStart)
+            {
+                Edit_SetSel(m_hWnd, m_pOwner->m_nSelStart, m_pOwner->m_nSelEnd);
+            }
+            else
+            {
+                Edit_SetSel(m_hWnd, 0, 0);
+            }
+        }
 		Edit_SetModify(m_hWnd, FALSE);
 		SendMessage(EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELPARAM(0, 0));
 		Edit_Enable(m_hWnd, m_pOwner->IsEnabled() == true);
 		Edit_SetReadOnly(m_hWnd, m_pOwner->IsReadOnly() == true);
+        //Edit_SetCueBannerTextFocused(m_hWnd, (LPCTSTR)m_pOwner->GetPlaceHolder(), TRUE);
 		//Styls
 		LONG styleValue = ::GetWindowLong(m_hWnd, GWL_STYLE);
 		styleValue |= pOwner->GetWindowStyls();
@@ -115,7 +127,7 @@ namespace DuiLib
 		else if( uMsg == OCM__BASE + WM_CTLCOLOREDIT  || uMsg == OCM__BASE + WM_CTLCOLORSTATIC ) {
 			if( m_pOwner->GetNativeEditBkColor() == 0xFFFFFFFF ) return NULL;
 			::SetBkMode((HDC)wParam, TRANSPARENT);
-			DWORD dwTextColor = m_pOwner->GetTextColor();
+			DWORD dwTextColor = m_pOwner->GetTextColor();            
 			::SetTextColor((HDC)wParam, RGB(GetBValue(dwTextColor),GetGValue(dwTextColor),GetRValue(dwTextColor)));
 			if( m_hBkBrush == NULL ) {
 				DWORD clrColor = m_pOwner->GetNativeEditBkColor();
@@ -123,6 +135,24 @@ namespace DuiLib
 			}
 			return (LRESULT)m_hBkBrush;
 		}
+        else if (uMsg == WM_PAINT)
+        {
+            lRes = OnPaint(uMsg, wParam, lParam, bHandled);
+            if (bHandled)
+            {
+                return lRes;
+            }
+        }
+        else if (uMsg == WM_DESTROY)
+        {
+            bHandled = FALSE;
+            DWORD dwValue = Edit_GetSel(m_hWnd);
+            if (dwValue != (DWORD)-1)
+            {
+                m_pOwner->m_nSelStart = (short)LOWORD(dwValue);
+                m_pOwner->m_nSelEnd = (short)HIWORD(dwValue);
+            }
+        }
 		else bHandled = FALSE;
 		if( !bHandled ) return CWindowWnd::HandleMessage(uMsg, wParam, lParam);
 		return lRes;
@@ -130,7 +160,7 @@ namespace DuiLib
 
 	LRESULT CEditWnd::OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 	{
-		LRESULT lRes = ::DefWindowProc(m_hWnd, uMsg, wParam, lParam);
+		LRESULT lRes = ::DefWindowProc(m_hWnd, uMsg, wParam, lParam);        
 		PostMessage(WM_CLOSE);
 		return lRes;
 	}
@@ -150,6 +180,27 @@ namespace DuiLib
 		return 0;
 	}
 
+    LRESULT CEditWnd::OnPaint( UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled )
+    {
+        bHandled = FALSE;
+        if(!m_pOwner->m_sText.IsEmpty()) return 0;
+        CDuiString sCurBannerText = m_pOwner->m_strCurBannerText;
+        if (sCurBannerText.IsEmpty()) return 0;
+        bHandled = TRUE;
+        PAINTSTRUCT ps = {0};
+        BeginPaint(m_hWnd, &ps);
+        CDC dc;
+        dc.Attach(ps.hdc);        
+        DWORD dwColor = m_pOwner->GetDisabledTextColor();
+        if( dwColor == 0 ) dwColor = m_pOwner->m_pManager->GetDefaultDisabledColor();
+        RECT rc = {0};
+        GetClientRect(m_hWnd, &rc);
+        dc.FillSolidRect(&rc, RGB(255, 255, 255));
+        CRenderEngine::DrawText(ps.hdc, m_pOwner->m_pManager, rc, sCurBannerText, dwColor, m_pOwner->GetFont(), DT_SINGLELINE);       
+        EndPaint(m_hWnd, &ps);
+        return 0;
+    }
+
 
 	/////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -161,6 +212,7 @@ namespace DuiLib
 	{
 		SetTextPadding(CDuiRect(4, 3, 4, 3));
 		SetBkColor(0xFFFFFFFF);
+        m_nSelStart = m_nSelEnd = 0;
 	}
 
 	LPCTSTR CEditUI::GetClass() const
@@ -207,7 +259,7 @@ namespace DuiLib
 			if( m_pWindow ) return;
 			m_pWindow = new CEditWnd();
 			ASSERT(m_pWindow);
-			m_pWindow->Init(this);
+			m_pWindow->Init(this);            
 			Invalidate();
 		}
 		if( event.Type == UIEVENT_KILLFOCUS && IsEnabled() ) 
@@ -422,7 +474,27 @@ namespace DuiLib
 	{
 		return m_dwEditbkColor;
 	}
-
+    void CEditUI::SetCurBannerText( LPCTSTR pszValue )
+    {
+        if(pszValue) 
+        {
+            m_strCurBannerText = pszValue;
+        }
+        else
+        {
+            m_strCurBannerText.Empty();
+        }
+        if (m_pWindow && IsWindow(m_pWindow->GetHWND()))
+        {
+            //Edit_SetCueBannerTextFocused(*m_pWindow, (LPCTSTR)m_sPlaceHolder, TRUE);
+        }
+        Invalidate();
+        return;
+    }
+    LPCTSTR CEditUI::GetPlaceHolder()
+    {
+        return m_strCurBannerText;
+    }
 	void CEditUI::SetSel(long nStartChar, long nEndChar)
 	{
 		if( m_pWindow != NULL ) Edit_SetSel(*m_pWindow, nStartChar,nEndChar);
@@ -481,6 +553,7 @@ namespace DuiLib
 			DWORD clrColor = _tcstoul(pstrValue, &pstr, 16);
 			SetNativeEditBkColor(clrColor);
 		}
+        else if (_tcscmp(pstrName, _T("curbannertext")) == 0) SetCurBannerText(pstrValue);        
 		else CLabelUI::SetAttribute(pstrName, pstrValue);
 	}
 
@@ -516,36 +589,48 @@ namespace DuiLib
 		}
 	}
 
-	void CEditUI::PaintText(HDC hDC)
-	{
-		if( m_dwTextColor == 0 ) m_dwTextColor = m_pManager->GetDefaultFontColor();
-		if( m_dwDisabledTextColor == 0 ) m_dwDisabledTextColor = m_pManager->GetDefaultDisabledColor();
+    void CEditUI::PaintText(HDC hDC)
+    {
+        if( m_dwTextColor == 0 ) m_dwTextColor = m_pManager->GetDefaultFontColor();
+        if( m_dwDisabledTextColor == 0 ) m_dwDisabledTextColor = m_pManager->GetDefaultDisabledColor();
 
-		if( m_sText.IsEmpty() ) return;
+        if( !m_sText.IsEmpty() )
+        {
+            CDuiString sText = m_sText;
+            if( m_bPasswordMode ) {
+                sText.Empty();
+                LPCTSTR p = m_sText.GetData();
+                while( *p != _T('\0') ) {
+                    sText += m_cPasswordChar;
+                    p = ::CharNext(p);
+                }
+            }
+            RECT rc = m_rcItem;
+            rc.left += m_rcTextPadding.left;
+            rc.right -= m_rcTextPadding.right;
+            rc.top += m_rcTextPadding.top;
+            rc.bottom -= m_rcTextPadding.bottom;
+            if( IsEnabled() ) {
+                CRenderEngine::DrawText(hDC, m_pManager, rc, sText, m_dwTextColor, \
+                    m_iFont, DT_SINGLELINE | m_uTextStyle);
+            }
+            else {
+                CRenderEngine::DrawText(hDC, m_pManager, rc, sText, m_dwDisabledTextColor, \
+                    m_iFont, DT_SINGLELINE | m_uTextStyle);
 
-		CDuiString sText = m_sText;
-		if( m_bPasswordMode ) {
-			sText.Empty();
-			LPCTSTR p = m_sText.GetData();
-			while( *p != _T('\0') ) {
-				sText += m_cPasswordChar;
-				p = ::CharNext(p);
-			}
-		}
-
-		RECT rc = m_rcItem;
-		rc.left += m_rcTextPadding.left;
-		rc.right -= m_rcTextPadding.right;
-		rc.top += m_rcTextPadding.top;
-		rc.bottom -= m_rcTextPadding.bottom;
-		if( IsEnabled() ) {
-			CRenderEngine::DrawText(hDC, m_pManager, rc, sText, m_dwTextColor, \
-				m_iFont, DT_SINGLELINE | m_uTextStyle);
-		}
-		else {
-			CRenderEngine::DrawText(hDC, m_pManager, rc, sText, m_dwDisabledTextColor, \
-				m_iFont, DT_SINGLELINE | m_uTextStyle);
-
-		}
-	}
+            }
+        }
+        else
+        {
+            if(!m_strCurBannerText.IsEmpty())
+            {
+                RECT rc = m_rcItem;
+                rc.left += m_rcTextPadding.left;
+                rc.right -= m_rcTextPadding.right;
+                rc.top += m_rcTextPadding.top;
+                rc.bottom -= m_rcTextPadding.bottom;                
+                CRenderEngine::DrawText(hDC, m_pManager, rc, m_strCurBannerText, m_dwDisabledTextColor, m_iFont, DT_SINGLELINE | m_uTextStyle);
+            }
+        }
+    }
 }

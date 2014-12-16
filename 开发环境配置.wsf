@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<job id="run"><script language="javascript">
+
+var shell = new ActiveXObject("Wscript.Shell");
+var fso = new ActiveXObject("Scripting.FileSystemObject");
+var cd = fso.GetAbsolutePathName("."); 
+
+function SetVsProps()
+{
+	var fn = "env.props.template";
+
+	var f = fso.OpenTextFile(fn, 1);
+	var content = f.ReadAll();
+	f.Close();
+
+	content = content.replace(/%ROOT_PATH%/gm, cd);
+
+	fn = "./env.props";
+	f = fso.CreateTextFile(fn, true);
+	f.Write(content);
+	f.Close();
+}
+
+SetVsProps();
+//WScript.Echo("环境配置完成");
+
+</script></job>
+

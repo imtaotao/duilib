@@ -3,6 +3,7 @@
 
 #pragma once
 
+
 namespace DuiLib
 {
 	/////////////////////////////////////////////////////////////////////////////////////
@@ -190,6 +191,7 @@ namespace DuiLib
 		int Replace(LPCTSTR pstrFrom, LPCTSTR pstrTo);
 
 		int __cdecl Format(LPCTSTR pstrFormat, ...);
+        int __cdecl Format(LPCTSTR pstrFormat, va_list Args);
 		int __cdecl SmallFormat(LPCTSTR pstrFormat, ...);
 
 	protected:

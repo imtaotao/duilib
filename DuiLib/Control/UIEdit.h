@@ -41,7 +41,8 @@ namespace DuiLib
 		void SetDisabledImage(LPCTSTR pStrImage);
 		void SetNativeEditBkColor(DWORD dwBkColor);
 		DWORD GetNativeEditBkColor() const;
-
+        void SetCurBannerText(LPCTSTR);
+        LPCTSTR GetPlaceHolder();
 		void SetSel(long nStartChar, long nEndChar);
 		void SetSelAll();
 		void SetReplaceSel(LPCTSTR lpszReplace);
@@ -70,6 +71,9 @@ namespace DuiLib
 		CDuiString m_sDisabledImage;
 		DWORD m_dwEditbkColor;
 		int m_iWindowStyls;
+        int m_nSelStart;
+        int m_nSelEnd;
+        CDuiString m_strCurBannerText;
 	};
 }
 #endif // __UIEDIT_H__

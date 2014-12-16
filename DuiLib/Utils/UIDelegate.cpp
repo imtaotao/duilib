@@ -19,9 +19,9 @@ CDelegateBase::~CDelegateBase()
 
 }
 
-bool CDelegateBase::Equals(const CDelegateBase& rhs) const 
+bool CDelegateBase::Equals(const CDelegateBase* rhs) const 
 {
-    return m_pObject == rhs.m_pObject && m_pFn == rhs.m_pFn; 
+    return m_pObject == rhs->m_pObject && m_pFn == rhs->m_pFn; 
 }
 
 bool CDelegateBase::operator() (void* param) 
@@ -56,33 +56,76 @@ void CEventSource::operator+= (const CDelegateBase& d)
 { 
     for( int i = 0; i < m_aDelegates.GetSize(); i++ ) {
         CDelegateBase* pObject = static_cast<CDelegateBase*>(m_aDelegates[i]);
-        if( pObject && pObject->Equals(d) ) return;
+        if( pObject && pObject->Equals(&d) ) return;
     }
 
     m_aDelegates.Add(d.Copy());
 }
-
+void CEventSource::Add( const CDelegateBase* d )
+{
+    if(!d) return;
+    for( int i = 0; i < m_aDelegates.GetSize(); i++ ) 
+    {
+        CDelegateBase* pObject = static_cast<CDelegateBase*>(m_aDelegates[i]);
+        if( pObject && pObject->Equals(d) ) return;
+    }
+    m_aDelegates.Add(d->Copy());
+}
 void CEventSource::operator+= (FnType pFn)
 { 
     (*this) += MakeDelegate(pFn);
 }
-
+void CEventSource::operator+= (CDelegateFunc func)
+{
+    Add(&func);
+}
 void CEventSource::operator-= (const CDelegateBase& d) 
 {
     for( int i = 0; i < m_aDelegates.GetSize(); i++ ) {
         CDelegateBase* pObject = static_cast<CDelegateBase*>(m_aDelegates[i]);
-        if( pObject && pObject->Equals(d) ) {
+        if( pObject && pObject->Equals(&d) ) {
             delete pObject;
             m_aDelegates.Remove(i);
             return;
         }
     }
 }
+void CEventSource::Remove( const CDelegateBase* d )
+{
+    for( int i = 0; i < m_aDelegates.GetSize(); i++ ) 
+    {
+        CDelegateBase* pObject = static_cast<CDelegateBase*>(m_aDelegates[i]);
+        if( pObject && pObject->Equals(d) ) 
+        {
+            delete pObject;
+            m_aDelegates.Remove(i);
+            return;
+        }
+    }
+}
+void CEventSource::RemoveById( int nId )
+{
+    for( int i = 0; i < m_aDelegates.GetSize(); i++ ) 
+    {
+        CDelegateBase* pObject = static_cast<CDelegateBase*>(m_aDelegates[i]);
+        if(! pObject) continue;
+
+        CDelegateFunc* p = dynamic_cast<CDelegateFunc*>(pObject);
+        if(!p) continue;
+        if (p->m_nId != nId) continue;
+        delete pObject;
+        m_aDelegates.Remove(i);
+        return;
+    }
+}
 void CEventSource::operator-= (FnType pFn)
 { 
     (*this) -= MakeDelegate(pFn);
 }
-
+void CEventSource::operator-= (CDelegateFunc pFn)
+{     
+    Remove(&pFn);
+}
 bool CEventSource::operator() (void* param) 
 {
     for( int i = 0; i < m_aDelegates.GetSize(); i++ ) {
@@ -91,5 +134,6 @@ bool CEventSource::operator() (void* param)
     }
     return true;
 }
+
 
 } // namespace DuiLib

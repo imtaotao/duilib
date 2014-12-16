@@ -861,6 +861,7 @@ BOOL CListUI::SortItems(PULVCompareFunc pfnCompare, UINT_PTR dwData)
 CListBodyUI::CListBodyUI(CListUI* pOwner) : m_pOwner(pOwner)
 {
     ASSERT(m_pOwner);
+    m_compareData = 0;
 }
 
 BOOL CListBodyUI::SortItems(PULVCompareFunc pfnCompare, UINT_PTR dwData)
@@ -868,6 +869,7 @@ BOOL CListBodyUI::SortItems(PULVCompareFunc pfnCompare, UINT_PTR dwData)
 	if (!pfnCompare)
 		return FALSE;
 	m_pCompareFunc = pfnCompare;
+    m_compareData = dwData;
 	CControlUI **pData = (CControlUI **)m_items.GetData();
 	qsort_s(m_items.GetData(), m_items.GetSize(), sizeof(CControlUI*), CListBodyUI::ItemComareFunc, this);	
 	IListItemUI *pItem = NULL;
