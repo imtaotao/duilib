@@ -4,15 +4,13 @@
 #include <shlwapi.h>
 #pragma comment(lib, "shlwapi.lib")
 #endif
-#ifndef SubclassWindow
-#define SubclassWindow(hwnd, lpfn)       \
-    ((WNDPROC)SetWindowLongPtr((hwnd), GWLP_WNDPROC, (LPARAM)(WNDPROC)(lpfn)))
-#endif
+
 namespace DuiLib {
 
 /////////////////////////////////////////////////////////////////////////////////////
 //
 //
+
 void UILIB_API DUI__Trace(LPCTSTR pstrFormat, ...)
 {
 #ifdef _DEBUG

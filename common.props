@@ -6,9 +6,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>11.0.61030.0</_ProjectFileVersion>
-    <_PropertySheetDisplayName>Common Setting</_PropertySheetDisplayName>
+    <_PropertySheetDisplayName>Search Common Setting</_PropertySheetDisplayName>
     <OutDir>$(ROOT)\bin\</OutDir>
-    <IntDir>$(ROOT)\tmp\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -18,7 +17,6 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(ROOT)\bin;$(ROOT)\public\lib\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <ProgramDatabaseFile>$(ROOT)\pdb\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(ROOT)\public\resource;$(ROOT)\public\include;$(SolutionDir);$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
