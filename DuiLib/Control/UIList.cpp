@@ -342,7 +342,7 @@ int CListUI::GetCurSel() const
     return m_iCurSel;
 }
 
-bool CListUI::SelectItem(int iIndex, bool bTakeFocus)
+bool CListUI::SelectItem(int iIndex, bool bTakeFocus, bool bEnsureVisible)
 {
     if( iIndex == m_iCurSel ) return true;
 
@@ -371,7 +371,7 @@ bool CListUI::SelectItem(int iIndex, bool bTakeFocus)
         m_iCurSel = -1;
         return false;
     }
-    EnsureVisible(m_iCurSel);
+    if(bEnsureVisible) EnsureVisible(m_iCurSel);
     if( bTakeFocus ) pControl->SetFocus();
     if( m_pManager != NULL ) {
         m_pManager->SendNotify(this, DUI_MSGTYPE_ITEMSELECT, m_iCurSel, iOldSel);

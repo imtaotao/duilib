@@ -251,7 +251,7 @@ int CComboUI::GetCurSel() const
     return m_iCurSel;
 }
 
-bool CComboUI::SelectItem(int iIndex, bool bTakeFocus)
+bool CComboUI::SelectItem(int iIndex, bool bTakeFocus, bool bEnsureVisible)
 {
     if( m_pWindow != NULL ) m_pWindow->Close();
     if( iIndex == m_iCurSel ) return true;

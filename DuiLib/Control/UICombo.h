@@ -30,7 +30,7 @@ public:
     void SetDropBoxSize(SIZE szDropBox);
 
     int GetCurSel() const;  
-    bool SelectItem(int iIndex, bool bTakeFocus = false);
+    bool SelectItem(int iIndex, bool bTakeFocus = false, bool bEnsureVisible = true);
 
     bool SetItemIndex(CControlUI* pControl, int iIndex);
     bool Add(CControlUI* pControl);

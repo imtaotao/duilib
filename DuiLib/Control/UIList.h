@@ -55,7 +55,7 @@ class IListOwnerUI
 public:
     virtual TListInfoUI* GetListInfo() = 0;
     virtual int GetCurSel() const = 0;
-    virtual bool SelectItem(int iIndex, bool bTakeFocus = false) = 0;
+    virtual bool SelectItem(int iIndex, bool bTakeFocus = false, bool bEnsureVisible = true) = 0;
     virtual void DoEvent(TEventUI& event) = 0;
 };
 
@@ -103,7 +103,7 @@ public:
     bool GetScrollSelect();
     void SetScrollSelect(bool bScrollSelect);
     int GetCurSel() const;
-    bool SelectItem(int iIndex, bool bTakeFocus = false);
+    bool SelectItem(int iIndex, bool bTakeFocus = false, bool bEnsureVisible = true);
 
     CListHeaderUI* GetHeader() const;  
     CContainerUI* GetList() const;
