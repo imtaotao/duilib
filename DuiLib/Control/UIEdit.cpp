@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "UIEdit.h"
 #include <wtl/atlgdi.h>
+#include "bdlog/bdassert.h"
 namespace DuiLib
 {
 	class CEditWnd : public CWindowWnd
@@ -18,6 +19,8 @@ namespace DuiLib
 		LRESULT OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 		LRESULT OnEditChanged(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
         LRESULT OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled); 
+		LRESULT OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled); 
+		LRESULT OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled); 
 	protected:
 		CEditUI* m_pOwner;
 		HBRUSH m_hBkBrush;
@@ -153,6 +156,24 @@ namespace DuiLib
                 m_pOwner->m_nSelEnd = (short)HIWORD(dwValue);
             }
         }
+		else if (uMsg == WM_TIMER)
+		{
+			bHandled = FALSE;
+			lRes = OnTimer(uMsg, wParam, lParam, bHandled);
+			if (bHandled)
+			{
+				return lRes;
+			}
+		}
+		else if (uMsg == WM_SETFOCUS)
+		{
+			bHandled = FALSE;
+			lRes = OnSetFocus(uMsg, wParam, lParam, bHandled);
+			if (bHandled)
+			{
+				return lRes;
+			}
+		}
 		else bHandled = FALSE;
 		if( !bHandled ) return CWindowWnd::HandleMessage(uMsg, wParam, lParam);
 		return lRes;
@@ -160,6 +181,7 @@ namespace DuiLib
 
 	LRESULT CEditWnd::OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 	{
+		DUI__Trace(L"@@@ OnKillFocus");
 		LRESULT lRes = ::DefWindowProc(m_hWnd, uMsg, wParam, lParam);        
 		PostMessage(WM_CLOSE);
 		return lRes;
@@ -200,8 +222,21 @@ namespace DuiLib
         EndPaint(m_hWnd, &ps);
         return 0;
     }
-
-
+	LRESULT CEditWnd::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+	{
+		if (wParam == 1000)
+		{
+			DUI__Trace(L"@@@ editwnd ShowCaret");
+			//BD_VERIFY(ShowCaret(NULL), );
+		}
+		return 0;
+	}
+	LRESULT CEditWnd::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+	{
+		DUI__Trace(L"@@@ editwnd OnSetFocus");
+		SetTimer(m_hWnd, 1000, 1000, NULL);
+		return 0;
+	}
 	/////////////////////////////////////////////////////////////////////////////////////
 	//
 	//

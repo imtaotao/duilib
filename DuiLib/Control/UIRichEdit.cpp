@@ -240,6 +240,7 @@ HRESULT CreateHost(CRichEditUI *re, const CREATESTRUCT *pcs, CTxtWinHost **pptec
 
 CTxtWinHost::CTxtWinHost() : m_re(NULL)
 {
+	DUI__Trace(L"@@@ CTxtWinHost %08X", (int)this);
     ::ZeroMemory(&cRefs, sizeof(CTxtWinHost) - offsetof(CTxtWinHost, cRefs));
     cchTextMost = cInitTextMax;
     laccelpos = -1;
@@ -247,6 +248,7 @@ CTxtWinHost::CTxtWinHost() : m_re(NULL)
 
 CTxtWinHost::~CTxtWinHost()
 {
+	DUI__Trace(L"@@@ ~CTxtWinHost %08X", (int)this);
     pserv->OnTxInPlaceDeactivate();
     pserv->Release();
 }
@@ -506,6 +508,10 @@ BOOL CTxtWinHost::TxCreateCaret(HBITMAP hbmp, INT xWidth, INT yHeight)
 
 BOOL CTxtWinHost::TxShowCaret(BOOL fShow)
 {
+	WCHAR szText[512] = {0};
+	GetWindowText(m_re->GetManager()->GetPaintWindow(), szText, _countof(szText) - 1);
+	DUI__Trace(L"@@@ TxShowCaret %08X, %d-%08X-%s", (int)this, fShow, m_re->GetManager()->GetPaintWindow(), szText);
+	//return FALSE;
     if(fShow)
         return ::ShowCaret(m_re->GetManager()->GetPaintWindow());
     else
@@ -1026,10 +1032,12 @@ CRichEditUI::CRichEditUI() : m_pTwh(NULL), m_bVScrollBarFixing(false), m_bWantTa
     m_bWantCtrlReturn(true), m_bRich(true), m_bReadOnly(false), m_bWordWrap(false), m_dwTextColor(0), m_iFont(-1), 
     m_iLimitText(cInitTextMax), m_lTwhStyle(ES_MULTILINE), m_bInited(false)
 {
+	DUI__Trace(L"@@@ CRichEditUI %08X", (int)this);
 }
 
 CRichEditUI::~CRichEditUI()
 {
+	DUI__Trace(L"@@@ ~CRichEditUI %08X", (int)this);
     if( m_pTwh ) {
         m_pTwh->Release();
         m_pManager->RemoveMessageFilter(this);
@@ -1640,6 +1648,7 @@ void CRichEditUI::DoInit()
     cs.lpszName = m_sText.GetData();
     CreateHost(this, &cs, &m_pTwh);
     if( m_pTwh ) {
+		DUI__Trace(L"@@@ DoInit");
         m_pTwh->SetTransparent(TRUE);
         LRESULT lResult;
         m_pTwh->GetTextServices()->TxSendMessage(EM_SETLANGOPTIONS, 0, 0, &lResult);
@@ -1833,6 +1842,7 @@ void CRichEditUI::DoEvent(TEventUI& event)
     }
     if( event.Type == UIEVENT_SETFOCUS ) {
         if( m_pTwh ) {
+			DUI__Trace(L"@@@ UIEVENT_SETFOCUS");
             m_pTwh->OnTxInPlaceActivate(NULL);
             m_pTwh->GetTextServices()->TxSendMessage(WM_SETFOCUS, 0, 0, 0);
         }
@@ -1842,6 +1852,7 @@ void CRichEditUI::DoEvent(TEventUI& event)
     }
     if( event.Type == UIEVENT_KILLFOCUS )  {
         if( m_pTwh ) {
+			DUI__Trace(L"@@@ UIEVENT_KILLFOCUS");
             m_pTwh->OnTxInPlaceActivate(NULL);
             m_pTwh->GetTextServices()->TxSendMessage(WM_KILLFOCUS, 0, 0, 0);
         }

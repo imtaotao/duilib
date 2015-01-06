@@ -18,8 +18,8 @@ namespace DuiLib
 		bool Remove(CControlUI* pControl);
 		void RemoveAll();
 		int GetCurSel() const;
-		bool SelectItem(int iIndex);
-		bool SelectItem(CControlUI* pControl);
+		bool SelectItem(int iIndex, bool bTakeFocus = true);
+		bool SelectItem(CControlUI* pControl, bool bTakeFocus = true);
 
 		void SetPos(RECT rc);
 

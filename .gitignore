@@ -38,3 +38,5 @@ bin/DuiLib.dll
 bin/MenuDemo.exe
 *.bsc
 360SafeDemo/Debug/360Safe.bsc
+*.bsc
+*.bsc

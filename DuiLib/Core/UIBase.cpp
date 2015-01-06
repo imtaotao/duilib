@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-
+#include "bdlog/bdassert.h"
 #ifdef _DEBUG
 #include <shlwapi.h>
 #pragma comment(lib, "shlwapi.lib")
@@ -22,7 +22,8 @@ void UILIB_API DUI__Trace(LPCTSTR pstrFormat, ...)
     ::wvnsprintf(szBuffer, lengthof(szBuffer) - 2, pstrFormat, args);
     _tcscat(szBuffer, _T("\n"));
     va_end(args);
-    ::OutputDebugString(szBuffer);
+    //::OutputDebugString(szBuffer);
+	XLogDebug(LogTag(L"duilib"), L"%s", szBuffer);
 #endif
 }
 
