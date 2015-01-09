@@ -25,7 +25,8 @@ m_dwFocusBorderColor(0),
 m_bColorHSL(false),
 m_nBorderSize(0),
 m_nBorderStyle(PS_SOLID),
-m_nTooltipWidth(300)
+m_nTooltipWidth(300),
+m_bMovable(false)
 {
     m_cXY.cx = m_cXY.cy = 0;
     m_cxyFixed.cx = m_cxyFixed.cy = 0;
@@ -851,7 +852,8 @@ void CControlUI::SetAttribute(LPCTSTR pstrName, LPCTSTR pstrValue)
     else if( _tcscmp(pstrName, _T("shortcut")) == 0 ) SetShortcut(pstrValue[0]);
     else if( _tcscmp(pstrName, _T("menu")) == 0 ) SetContextMenuUsed(_tcscmp(pstrValue, _T("true")) == 0);
 	else if( _tcscmp(pstrName, _T("virtualwnd")) == 0 ) SetVirtualWnd(pstrValue);
-	else if (_tcscmp(pstrName, _T("listitemelement")) == 0 ) SetListItemElement(_tcscmp(pstrValue, _T("true")) == 0);	
+	else if (_tcscmp(pstrName, _T("listitemelement")) == 0 ) SetListItemElement(_tcscmp(pstrValue, _T("true")) == 0);
+	else if (_tcscmp(pstrName, _T("movable")) == 0 ) SetMovable(_tcscmp(pstrValue, _T("true")) == 0);
 }
 
 CControlUI* CControlUI::ApplyAttributeList(LPCTSTR pstrList)
@@ -1113,6 +1115,17 @@ void CControlUI::SetBorderStyle( int nStyle )
 void CControlUI::SetListItemElement( bool bValue )
 {
 	m_bListItemElement = bValue;
+	return;
+}
+
+bool CControlUI::GetMovable() const
+{
+	return m_bMovable;
+}
+
+void CControlUI::SetMovable( bool bValue )
+{
+	m_bMovable = bValue;
 	return;
 }
 

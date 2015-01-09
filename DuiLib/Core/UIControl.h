@@ -96,6 +96,8 @@ public:
     virtual bool IsRelativePos() const;
 
 	virtual void SetListItemElement(bool);
+	virtual void SetMovable(bool);
+	virtual bool GetMovable() const;
     //  Û±ÍÃ· æ
     virtual CDuiString GetToolTip() const;
     virtual void SetToolTip(LPCTSTR pstrText);
@@ -214,6 +216,8 @@ protected:
     SIZE m_cxyBorderRound;
     RECT m_rcPaint;
 	RECT m_rcBorderSize;
+
+	bool m_bMovable;
 };
 
 } // namespace DuiLib

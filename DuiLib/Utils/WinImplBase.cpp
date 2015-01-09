@@ -169,7 +169,11 @@ LRESULT WindowImplBase::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam, BOO
 				_tcsicmp(pControl->GetClass(), _T("TextUI")) != 0 )
 				return HTCAPTION;
 	}
-
+	CControlUI* pControl = static_cast<CControlUI*>(m_PaintManager.FindControl(pt));	
+	if (pControl && pControl->GetMovable())
+	{
+		return HTCAPTION;
+	}
 	return HTCLIENT;
 }
 
