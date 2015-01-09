@@ -38,6 +38,7 @@ m_nTooltipWidth(300)
     ::ZeroMemory(&m_rcPaint, sizeof(RECT));
 	::ZeroMemory(&m_rcBorderSize,sizeof(RECT));
     ::ZeroMemory(&m_tRelativePos, sizeof(TRelativePosUI));
+	m_bListItemElement = false;
 }
 
 CControlUI::~CControlUI()
@@ -850,6 +851,7 @@ void CControlUI::SetAttribute(LPCTSTR pstrName, LPCTSTR pstrValue)
     else if( _tcscmp(pstrName, _T("shortcut")) == 0 ) SetShortcut(pstrValue[0]);
     else if( _tcscmp(pstrName, _T("menu")) == 0 ) SetContextMenuUsed(_tcscmp(pstrValue, _T("true")) == 0);
 	else if( _tcscmp(pstrName, _T("virtualwnd")) == 0 ) SetVirtualWnd(pstrValue);
+	else if (_tcscmp(pstrName, _T("listitemelement")) == 0 ) SetListItemElement(_tcscmp(pstrValue, _T("true")) == 0);	
 }
 
 CControlUI* CControlUI::ApplyAttributeList(LPCTSTR pstrList)
@@ -1106,6 +1108,12 @@ void CControlUI::SetBorderStyle( int nStyle )
 {
 	m_nBorderStyle = nStyle;
 	Invalidate();
+}
+
+void CControlUI::SetListItemElement( bool bValue )
+{
+	m_bListItemElement = bValue;
+	return;
 }
 
 } // namespace DuiLib

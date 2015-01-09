@@ -853,6 +853,7 @@ BOOL CListUI::SortItems(PULVCompareFunc pfnCompare, UINT_PTR dwData)
 		return FALSE;
 	return m_pList->SortItems(pfnCompare, dwData);	
 }
+
 /////////////////////////////////////////////////////////////////////////////////////
 //
 //
@@ -2372,6 +2373,28 @@ void CListContainerElementUI::DrawItemBk(HDC hDC, const RECT& rcItem)
         RECT rcLine = { m_rcItem.left, m_rcItem.bottom - 1, m_rcItem.right, m_rcItem.bottom - 1 };
         CRenderEngine::DrawLine(hDC, rcLine, 1, GetAdjustColor(pInfo->dwLineColor));
     }
+}
+
+DWORD CListContainerElementUI::GetListItemTextColor( CControlUI*, UINT uState, bool&bHandled )
+{
+	bHandled = false;
+	if( m_pOwner == NULL ) return 0;
+	TListInfoUI* pInfo = m_pOwner->GetListInfo();
+	DWORD iTextColor = pInfo->dwTextColor;
+	bHandled = true;
+	if( (uState & UISTATE_HOT) != 0 )
+	{
+		iTextColor = pInfo->dwHotTextColor;
+	}
+	if( IsSelected() ) 
+	{
+		iTextColor = pInfo->dwSelectedTextColor;
+	}
+	if( !IsEnabled() ) 
+	{
+		iTextColor = pInfo->dwDisabledTextColor;
+	}
+	return iTextColor;
 }
 
 } // namespace DuiLib

@@ -95,6 +95,7 @@ public:
     virtual TRelativePosUI GetRelativePos() const;
     virtual bool IsRelativePos() const;
 
+	virtual void SetListItemElement(bool);
     // 鼠标提示
     virtual CDuiString GetToolTip() const;
     virtual void SetToolTip(LPCTSTR pstrText);
@@ -190,6 +191,7 @@ protected:
     bool m_bFocused;
     bool m_bFloat;
     bool m_bSetPos; // 防止SetPos循环调用
+	bool m_bListItemElement;
     TRelativePosUI m_tRelativePos;
 
     CDuiString m_sText;

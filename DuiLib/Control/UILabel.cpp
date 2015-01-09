@@ -281,6 +281,24 @@ namespace DuiLib
 		if( m_dwTextColor == 0 ) m_dwTextColor = m_pManager->GetDefaultFontColor();
 		if( m_dwDisabledTextColor == 0 ) m_dwDisabledTextColor = m_pManager->GetDefaultDisabledColor();
 
+		if (m_bListItemElement)
+		{
+			CContainerUI*pParent = dynamic_cast<CContainerUI*>(m_pParent);
+			if (pParent)
+			{
+				bool bHandled = false;
+				UINT uState = 0;
+				if (!IsEnabled())
+				{
+					uState |= UISTATE_DISABLED;
+				}
+				DWORD dwTextColor = pParent->GetListItemTextColor(this, uState, bHandled);
+				if (bHandled)
+				{
+					m_dwTextColor = dwTextColor;
+				}
+			}
+		}
 		RECT rc = m_rcItem;
 		rc.left += m_rcTextPadding.left;
 		rc.right -= m_rcTextPadding.right;

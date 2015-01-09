@@ -19,6 +19,7 @@ public:
     virtual bool Remove(CControlUI* pControl) = 0;
     virtual bool RemoveAt(int iIndex)  = 0;
     virtual void RemoveAll() = 0;
+	virtual DWORD GetListItemTextColor(CControlUI*, UINT uState, bool&bHandled) = 0;
 };
 
 
@@ -45,6 +46,7 @@ public:
     bool Remove(CControlUI* pControl);
     bool RemoveAt(int iIndex);
     void RemoveAll();
+	DWORD GetListItemTextColor(CControlUI*, UINT uState, bool&bHandled);
 
     void DoEvent(TEventUI& event);
     void SetVisible(bool bVisible = true);

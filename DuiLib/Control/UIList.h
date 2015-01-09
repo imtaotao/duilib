@@ -118,7 +118,7 @@ public:
     bool Remove(CControlUI* pControl);
     bool RemoveAt(int iIndex);
     void RemoveAll();
-
+	DWORD GetListItemTextColor( CControlUI*, bool&bHandled );
     void EnsureVisible(int iIndex);
     void Scroll(int dx, int dy);
 
@@ -421,7 +421,7 @@ public:
     bool Select(bool bSelect = true);
     bool IsExpanded() const;
     bool Expand(bool bExpand = true);
-
+	DWORD GetListItemTextColor( CControlUI*, UINT uState, bool&bHandled );
     void Invalidate(); // 直接CControl::Invalidate会导致滚动条刷新，重写减少刷新区域
     bool Activate();
 

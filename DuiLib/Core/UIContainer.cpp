@@ -905,4 +905,14 @@ namespace DuiLib
 		return pSubControl;
 	}
 
+	DWORD CContainerUI::GetListItemTextColor( CControlUI*pControl, UINT uState, bool&bHandled )
+	{
+		CContainerUI*pParent = dynamic_cast<CContainerUI*>(m_pParent);
+		if (!pParent)
+		{
+			bHandled = false;
+			return 0;
+		}
+		return pParent->GetListItemTextColor(pControl, uState, bHandled);;
+	}
 } // namespace DuiLib
