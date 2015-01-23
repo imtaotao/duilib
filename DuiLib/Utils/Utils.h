@@ -2,7 +2,7 @@
 #define __UTILS_H__
 
 #pragma once
-
+#include <atldef.h>
 
 namespace DuiLib
 {
@@ -285,6 +285,168 @@ namespace DuiLib
 		{ 
 			VariantClear(this); 
 		}
+	};
+
+	class CMemLockStream : public IStream
+	{
+	public:
+		CMemLockStream(LPBYTE pBytes, UINT uSize)
+			: m_pBytes(pBytes), m_uSize(uSize)
+			, m_uPos(0) , m_nRefCnt(0)
+		{
+
+		}
+		virtual ~CMemLockStream()
+		{
+			ATLASSERT(!m_nRefCnt);
+		}
+		virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void ** ppvObject)
+		{ 
+			if (iid == __uuidof(IUnknown) || iid == __uuidof(IStream))
+			{
+				*ppvObject = static_cast<IStream*>(this);
+				AddRef();
+				return S_OK;
+			} 
+			else
+				return E_NOINTERFACE; 
+		}
+		virtual ULONG STDMETHODCALLTYPE AddRef( void )
+		{
+			InterlockedIncrement(&m_nRefCnt);
+			return m_nRefCnt;
+		}
+
+		virtual ULONG STDMETHODCALLTYPE Release( void )
+		{
+			InterlockedDecrement(&m_nRefCnt);
+			if (m_nRefCnt <= 0)
+			{
+				delete this;
+				return 0;
+			}
+			return m_nRefCnt;
+		}
+		virtual HRESULT STDMETHODCALLTYPE Read(void* pv, ULONG cb, ULONG* pcbRead)
+		{
+			if (!pv)
+			{
+				return E_INVALIDARG;
+			}
+			if (!m_pBytes)
+			{
+				return E_ACCESSDENIED;
+			}		
+			if (m_uSize > 0  && m_uPos < m_uSize)
+			{
+				ULONG nRead = __min(cb, m_uSize - m_uPos);
+				if (nRead)
+				{
+					memcpy(pv, m_pBytes + m_uPos, nRead);
+				}
+				if (pcbRead)
+				{
+					*pcbRead = nRead;
+				}
+				m_uPos += nRead;
+				if (nRead != cb)
+				{
+					return S_FALSE;
+				}
+				return S_OK;			
+			}
+			return E_FAIL;
+		}
+		virtual HRESULT STDMETHODCALLTYPE Seek(LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER* lpNewFilePointer)
+		{
+			if (!m_pBytes || !m_uSize)
+			{
+				return E_FAIL;
+			}		
+			UINT nNewPos = m_uPos;
+			switch (dwOrigin)
+			{
+			case STREAM_SEEK_SET:
+				nNewPos = 0;			
+				break;
+			case STREAM_SEEK_CUR:
+				break;
+			case STREAM_SEEK_END:
+				nNewPos = m_uSize - 1;
+				break;
+			default:
+				return STG_E_SEEKERROR;
+				break;
+			}
+			nNewPos += (ULONG)dlibMove.QuadPart;
+			HRESULT hr = S_OK;
+			if (dlibMove.u.LowPart >= 0x80000000 &&	nNewPos >= dlibMove.u.LowPart)
+			{			
+				hr = STG_E_SEEKERROR;
+				goto end;
+			}
+
+			m_uPos = nNewPos;
+end:
+			if (lpNewFilePointer) 
+			{
+				lpNewFilePointer->LowPart = nNewPos;
+			}
+			return S_OK;
+		}
+
+		virtual HRESULT STDMETHODCALLTYPE Stat(STATSTG* pstatstg, DWORD grfStatFlag) 
+		{
+			memset(pstatstg, 0, sizeof(STATSTG));
+			pstatstg->pwcsName = NULL;
+			pstatstg->type     = STGTY_STREAM;
+			pstatstg->cbSize.LowPart   = (DWORD)m_uSize;
+			return S_OK;
+		}
+		virtual HRESULT STDMETHODCALLTYPE Write(void const*, ULONG, ULONG*)
+		{
+			return E_NOTIMPL;
+		}
+		virtual HRESULT STDMETHODCALLTYPE SetSize(ULARGE_INTEGER)
+		{ 
+			return E_NOTIMPL;   
+		}
+
+		virtual HRESULT STDMETHODCALLTYPE CopyTo(IStream*, ULARGE_INTEGER, ULARGE_INTEGER*,
+			ULARGE_INTEGER*) 
+		{ 
+			return E_NOTIMPL;   
+		}
+
+		virtual HRESULT STDMETHODCALLTYPE Commit(DWORD)                                      
+		{ 
+			return E_NOTIMPL;   
+		}
+
+		virtual HRESULT STDMETHODCALLTYPE Revert(void)                                       
+		{ 
+			return E_NOTIMPL;   
+		}
+
+		virtual HRESULT STDMETHODCALLTYPE LockRegion(ULARGE_INTEGER, ULARGE_INTEGER, DWORD)              
+		{ 
+			return E_NOTIMPL;   
+		}
+
+		virtual HRESULT STDMETHODCALLTYPE UnlockRegion(ULARGE_INTEGER, ULARGE_INTEGER, DWORD)            
+		{ 
+			return E_NOTIMPL;   
+		}
+
+		virtual HRESULT STDMETHODCALLTYPE Clone(IStream **)                                  
+		{ 
+			return E_NOTIMPL;   
+		}
+	protected:
+		BYTE* m_pBytes;	
+		UINT m_uSize;
+		UINT m_uPos;
+		LONG m_nRefCnt;
 	};
 
 }// namespace DuiLib

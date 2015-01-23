@@ -853,7 +853,7 @@ namespace DuiLib {
                 m_bMouseTracking = false;
             }
             break;
-        case WM_MOUSEMOVE:
+        case WM_MOUSEMOVE:		
             {
                 // Start tracking this entire window again...
                 if( !m_bMouseTracking ) {

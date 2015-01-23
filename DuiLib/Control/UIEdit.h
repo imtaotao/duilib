@@ -12,7 +12,7 @@ namespace DuiLib
 		friend class CEditWnd;
 	public:
 		CEditUI();
-
+		virtual ~CEditUI();
 		LPCTSTR GetClass() const;
 		LPVOID GetInterface(LPCTSTR pstrName);
 		UINT GetControlFlags() const;
@@ -42,7 +42,7 @@ namespace DuiLib
 		void SetNativeEditBkColor(DWORD dwBkColor);
 		DWORD GetNativeEditBkColor() const;
         void SetCurBannerText(LPCTSTR);
-        LPCTSTR GetPlaceHolder();
+        CDuiString GetCurBannerText();
 		void SetSel(long nStartChar, long nEndChar);
 		void SetSelAll();
 		void SetReplaceSel(LPCTSTR lpszReplace);

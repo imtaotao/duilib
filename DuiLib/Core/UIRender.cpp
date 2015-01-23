@@ -1,5 +1,8 @@
 #include "StdAfx.h"
-
+#include <GdiPlus.h>
+#include "bdlog/bdassert.h"
+#include <memory>
+using namespace std;
 ///////////////////////////////////////////////////////////////////////////////////////
 DECLARE_HANDLE(HZIP);	// An HZIP identifies a zip file that has been opened
 typedef DWORD ZRESULT;
@@ -338,71 +341,128 @@ TImageInfo* CRenderEngine::LoadImage(STRINGorID bitmap, LPCTSTR type, DWORD mask
 	}
 	if (!pData)
 	{
-		//::MessageBox(0, _T("¶ÁÈ¡Í¼Æ¬Êý¾ÝÊ§°Ü£¡"), _T("×¥BUG"), MB_OK);
+		//::MessageBox(0, _T("¶ÁÈ¡Í¼Æ¬Êý¾ÝÊ§°Ü£¡"), _T("×¥BUG"), MB_OK);		
 		return NULL;
 	}
-
+	ON_LEAVE_1(delete[] pData, BYTE*&, pData);
     LPBYTE pImage = NULL;
     int x,y,n;
-    pImage = stbi_load_from_memory(pData, dwSize, &x, &y, &n, 4);
-    delete[] pData;
-	if( !pImage ) {
+    pImage = stbi_load_from_memory(pData, dwSize, &x, &y, &n, 4);  
+	if( !pImage ) 
+	{
 		//::MessageBox(0, _T("½âÎöÍ¼Æ¬Ê§°Ü"), _T("×¥BUG"), MB_OK);
-		return NULL;
+		CMemLockStream* pMemLock = new CMemLockStream(pData, dwSize);
+		pMemLock->AddRef();
+		CComPtr<IStream>pStream;
+		pStream.Attach(pMemLock);
+		shared_ptr<Gdiplus::Image>pImage(new Gdiplus::Image(pStream));
+		if (!pImage)
+		{
+			return NULL;
+		}
+		if (pImage->GetLastStatus() != Gdiplus::Ok)
+		{
+			return NULL;
+		}			
+		x = pImage->GetWidth();
+		y = pImage->GetHeight();
+		Gdiplus::PixelFormat fmt = pImage->GetPixelFormat();
+		int nHeight = pImage->GetHeight();
+		int nWidth = pImage->GetWidth();
+		if (nWidth <= 0 || nHeight <= 0)
+		{
+			return NULL;
+		}
+		BITMAPINFO bmi = {0};
+		::ZeroMemory(&bmi, sizeof(BITMAPINFO));
+		bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+		bmi.bmiHeader.biWidth = x;
+		bmi.bmiHeader.biHeight = -y;
+		bmi.bmiHeader.biPlanes = 1;
+		bmi.bmiHeader.biBitCount = 32;
+		bmi.bmiHeader.biCompression = BI_RGB;
+		bmi.bmiHeader.biSizeImage = x * y * 4;
+		LPBYTE pDest = NULL;
+		HBITMAP hBitmap = ::CreateDIBSection(NULL, &bmi, DIB_RGB_COLORS, (void**)&pDest, NULL, 0);
+		if( !hBitmap ) 
+		{
+			return NULL;
+		}
+		bool bAlphaChannel = fmt == PixelFormat32bppARGB;
+		{
+			CDC dc;
+			dc.CreateCompatibleDC(NULL);
+			HBITMAP hBmpOld = dc.SelectBitmap(hBitmap);	
+			Gdiplus::Graphics g(dc);
+			g.DrawImage(pImage.get(), 0, 0, nWidth, nHeight);
+			if(hBmpOld)
+			{
+				dc.SelectBitmap(hBmpOld);
+				hBmpOld = NULL;
+			}
+		}
+		TImageInfo* data = new TImageInfo;
+		data->hBitmap = hBitmap;
+		data->nX = nWidth;
+		data->nY = nHeight;
+		data->alphaChannel = bAlphaChannel;
+		return data;
 	}
+	else
+	{
+		BITMAPINFO bmi;
+		::ZeroMemory(&bmi, sizeof(BITMAPINFO));
+		bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+		bmi.bmiHeader.biWidth = x;
+		bmi.bmiHeader.biHeight = -y;
+		bmi.bmiHeader.biPlanes = 1;
+		bmi.bmiHeader.biBitCount = 32;
+		bmi.bmiHeader.biCompression = BI_RGB;
+		bmi.bmiHeader.biSizeImage = x * y * 4;
 
-    BITMAPINFO bmi;
-    ::ZeroMemory(&bmi, sizeof(BITMAPINFO));
-    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth = x;
-    bmi.bmiHeader.biHeight = -y;
-    bmi.bmiHeader.biPlanes = 1;
-    bmi.bmiHeader.biBitCount = 32;
-    bmi.bmiHeader.biCompression = BI_RGB;
-    bmi.bmiHeader.biSizeImage = x * y * 4;
+		bool bAlphaChannel = false;
+		LPBYTE pDest = NULL;
+		HBITMAP hBitmap = ::CreateDIBSection(NULL, &bmi, DIB_RGB_COLORS, (void**)&pDest, NULL, 0);
+		if( !hBitmap ) {
+			//::MessageBox(0, _T("CreateDIBSectionÊ§°Ü"), _T("×¥BUG"), MB_OK);
+			return NULL;
+		}
 
-    bool bAlphaChannel = false;
-    LPBYTE pDest = NULL;
-    HBITMAP hBitmap = ::CreateDIBSection(NULL, &bmi, DIB_RGB_COLORS, (void**)&pDest, NULL, 0);
-	if( !hBitmap ) {
-		//::MessageBox(0, _T("CreateDIBSectionÊ§°Ü"), _T("×¥BUG"), MB_OK);
-		return NULL;
-	}
+		for( int i = 0; i < x * y; i++ ) 
+		{
+			pDest[i*4 + 3] = pImage[i*4 + 3];
+			if( pDest[i*4 + 3] < 255 )
+			{
+				pDest[i*4] = (BYTE)(DWORD(pImage[i*4 + 2])*pImage[i*4 + 3]/255);
+				pDest[i*4 + 1] = (BYTE)(DWORD(pImage[i*4 + 1])*pImage[i*4 + 3]/255);
+				pDest[i*4 + 2] = (BYTE)(DWORD(pImage[i*4])*pImage[i*4 + 3]/255); 
+				bAlphaChannel = true;
+			}
+			else
+			{
+				pDest[i*4] = pImage[i*4 + 2];
+				pDest[i*4 + 1] = pImage[i*4 + 1];
+				pDest[i*4 + 2] = pImage[i*4]; 
+			}
 
-    for( int i = 0; i < x * y; i++ ) 
-    {
-        pDest[i*4 + 3] = pImage[i*4 + 3];
-        if( pDest[i*4 + 3] < 255 )
-        {
-            pDest[i*4] = (BYTE)(DWORD(pImage[i*4 + 2])*pImage[i*4 + 3]/255);
-            pDest[i*4 + 1] = (BYTE)(DWORD(pImage[i*4 + 1])*pImage[i*4 + 3]/255);
-            pDest[i*4 + 2] = (BYTE)(DWORD(pImage[i*4])*pImage[i*4 + 3]/255); 
-            bAlphaChannel = true;
-        }
-        else
-        {
-            pDest[i*4] = pImage[i*4 + 2];
-            pDest[i*4 + 1] = pImage[i*4 + 1];
-            pDest[i*4 + 2] = pImage[i*4]; 
-        }
+			if( *(DWORD*)(&pDest[i*4]) == mask ) {
+				pDest[i*4] = (BYTE)0;
+				pDest[i*4 + 1] = (BYTE)0;
+				pDest[i*4 + 2] = (BYTE)0; 
+				pDest[i*4 + 3] = (BYTE)0;
+				bAlphaChannel = true;
+			}
+		}
 
-        if( *(DWORD*)(&pDest[i*4]) == mask ) {
-            pDest[i*4] = (BYTE)0;
-            pDest[i*4 + 1] = (BYTE)0;
-            pDest[i*4 + 2] = (BYTE)0; 
-            pDest[i*4 + 3] = (BYTE)0;
-            bAlphaChannel = true;
-        }
-    }
+		stbi_image_free(pImage);
 
-    stbi_image_free(pImage);
-
-    TImageInfo* data = new TImageInfo;
-    data->hBitmap = hBitmap;
-    data->nX = x;
-    data->nY = y;
-    data->alphaChannel = bAlphaChannel;
-    return data;
+		TImageInfo* data = new TImageInfo;
+		data->hBitmap = hBitmap;
+		data->nX = x;
+		data->nY = y;
+		data->alphaChannel = bAlphaChannel;
+		return data;
+	}    
 }
 
 void CRenderEngine::FreeImage(const TImageInfo* bitmap)

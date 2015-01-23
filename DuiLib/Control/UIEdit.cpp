@@ -33,6 +33,10 @@ namespace DuiLib
 	void CEditWnd::Init(CEditUI* pOwner)
 	{
 		m_pOwner = pOwner;
+		if (!m_pOwner)
+		{
+			return;
+		}
 		RECT rcPos = CalPos();
 		UINT uStyle = WS_CHILD | ES_AUTOHSCROLL;
 		if( m_pOwner->IsPasswordMode() ) uStyle |= ES_PASSWORD;
@@ -64,7 +68,7 @@ namespace DuiLib
 		SendMessage(EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELPARAM(0, 0));
 		Edit_Enable(m_hWnd, m_pOwner->IsEnabled() == true);
 		Edit_SetReadOnly(m_hWnd, m_pOwner->IsReadOnly() == true);
-        //Edit_SetCueBannerTextFocused(m_hWnd, (LPCTSTR)m_pOwner->GetPlaceHolder(), TRUE);
+        Edit_SetCueBannerTextFocused(m_hWnd, (LPCTSTR)m_pOwner->GetCurBannerText(), TRUE);
 		//Styls
 		LONG styleValue = ::GetWindowLong(m_hWnd, GWL_STYLE);
 		styleValue |= pOwner->GetWindowStyls();
@@ -76,7 +80,12 @@ namespace DuiLib
 
 	RECT CEditWnd::CalPos()
 	{
-		CDuiRect rcPos = m_pOwner->GetPos();
+		CDuiRect rcPos;
+		if (!m_pOwner)
+		{
+			return rcPos;
+		}
+		rcPos = m_pOwner->GetPos();
 		RECT rcInset = m_pOwner->GetTextPadding();
 		rcPos.left += rcInset.left;
 		rcPos.top += rcInset.top;
@@ -102,10 +111,15 @@ namespace DuiLib
 
 	void CEditWnd::OnFinalMessage(HWND /*hWnd*/)
 	{
-		m_pOwner->Invalidate();
+		if(m_pOwner)
+			m_pOwner->Invalidate();
 		// Clear reference and die
-		if( m_hBkBrush != NULL ) ::DeleteObject(m_hBkBrush);
-		m_pOwner->m_pWindow = NULL;
+		if( m_hBkBrush != NULL )
+		{
+			::DeleteObject(m_hBkBrush);
+		}
+		if(m_pOwner)
+			m_pOwner->m_pWindow = NULL;
 		delete this;
 	}
 
@@ -123,7 +137,7 @@ namespace DuiLib
 			}
 		}
 		else if( uMsg == WM_KEYDOWN && TCHAR(wParam) == VK_RETURN ) {
-			m_pOwner->GetManager()->SendNotify(m_pOwner, DUI_MSGTYPE_RETURN);
+			if(m_pOwner) m_pOwner->GetManager()->SendNotify(m_pOwner, DUI_MSGTYPE_RETURN);
 		}
 		else if( uMsg == OCM__BASE + WM_CTLCOLOREDIT  || uMsg == OCM__BASE + WM_CTLCOLORSTATIC ) {
 			if( m_pOwner->GetNativeEditBkColor() == 0xFFFFFFFF ) return NULL;
@@ -136,19 +150,19 @@ namespace DuiLib
 			}
 			return (LRESULT)m_hBkBrush;
 		}
-        else if (uMsg == WM_PAINT)
+        /*else if (uMsg == WM_PAINT)
         {
             lRes = OnPaint(uMsg, wParam, lParam, bHandled);
             if (bHandled)
             {
                 return lRes;
             }
-        }
+        }*/
         else if (uMsg == WM_DESTROY)
         {
             bHandled = FALSE;
             DWORD dwValue = Edit_GetSel(m_hWnd);
-            if (dwValue != (DWORD)-1)
+            if (dwValue != (DWORD)-1 && m_pOwner)
             {
                 m_pOwner->m_nSelStart = (short)LOWORD(dwValue);
                 m_pOwner->m_nSelEnd = (short)HIWORD(dwValue);
@@ -481,12 +495,12 @@ namespace DuiLib
         }
         if (m_pWindow && IsWindow(m_pWindow->GetHWND()))
         {
-            //Edit_SetCueBannerTextFocused(*m_pWindow, (LPCTSTR)m_sPlaceHolder, TRUE);
+            Edit_SetCueBannerTextFocused(*m_pWindow, (LPCTSTR)m_strCurBannerText, TRUE);
         }
         Invalidate();
         return;
     }
-    LPCTSTR CEditUI::GetPlaceHolder()
+    CDuiString CEditUI::GetCurBannerText()
     {
         return m_strCurBannerText;
     }
@@ -628,4 +642,13 @@ namespace DuiLib
             }
         }
     }
+
+	CEditUI::~CEditUI()
+	{
+		if (m_pWindow && m_pWindow->GetHWND())
+		{
+			DestroyWindow(m_pWindow->GetHWND());
+		}
+	}
+
 }

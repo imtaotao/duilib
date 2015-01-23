@@ -11,6 +11,7 @@
 
 using namespace ShockwaveFlashObjects;
 #include "Utils/FlashEventHandler.h"
+#include <comutil.h>
 class CActiveXCtrl;
 
 namespace DuiLib

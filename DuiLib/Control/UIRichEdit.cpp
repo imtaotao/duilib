@@ -239,8 +239,8 @@ HRESULT CreateHost(CRichEditUI *re, const CREATESTRUCT *pcs, CTxtWinHost **pptec
 }
 
 CTxtWinHost::CTxtWinHost() : m_re(NULL)
+	, pserv(NULL)
 {
-	DUI__Trace(L"@@@ CTxtWinHost %08X", (int)this);
     ::ZeroMemory(&cRefs, sizeof(CTxtWinHost) - offsetof(CTxtWinHost, cRefs));
     cchTextMost = cInitTextMax;
     laccelpos = -1;
@@ -248,17 +248,20 @@ CTxtWinHost::CTxtWinHost() : m_re(NULL)
 
 CTxtWinHost::~CTxtWinHost()
 {
-	DUI__Trace(L"@@@ ~CTxtWinHost %08X", (int)this);
-    pserv->OnTxInPlaceDeactivate();
-    pserv->Release();
+	if (pserv)
+	{
+		pserv->OnTxInPlaceDeactivate();
+		pserv->Release();
+		pserv = NULL;
+	}    
 }
 
 ////////////////////// Create/Init/Destruct Commands ///////////////////////
 
 BOOL CTxtWinHost::Init(CRichEditUI *re, const CREATESTRUCT *pcs)
 {
-    IUnknown *pUnk;
-    HRESULT hr;
+    IUnknown *pUnk = NULL;
+    HRESULT hr = S_OK;
 
     m_re = re;
     // Initialize Reference count
@@ -305,7 +308,7 @@ BOOL CTxtWinHost::Init(CRichEditUI *re, const CREATESTRUCT *pcs)
     //if(FAILED(CreateTextServices(NULL, this, &pUnk)))
     //    goto err;
 
-	PCreateTextServices TextServicesProc;
+	PCreateTextServices TextServicesProc = NULL;	
 	HMODULE hmod = LoadLibrary(_T("msftedit.dll"));
 	if (hmod)
 	{
@@ -316,18 +319,22 @@ BOOL CTxtWinHost::Init(CRichEditUI *re, const CREATESTRUCT *pcs)
 	{
 		HRESULT hr = TextServicesProc(NULL, this, &pUnk);
 	}
+	if (pUnk)
+	{
+		hr = pUnk->QueryInterface(IID_ITextServices,(void **)&pserv);
 
-    hr = pUnk->QueryInterface(IID_ITextServices,(void **)&pserv);
-
-    // Whether the previous call succeeded or failed we are done
-    // with the private interface.
-    pUnk->Release();
-
+		// Whether the previous call succeeded or failed we are done
+		// with the private interface.
+		pUnk->Release();
+	}
+	else
+	{
+		hr = E_FAIL;
+	}
     if(FAILED(hr))
     {
         goto err;
     }
-
     // Set window text
     if(pcs && pcs->lpszName)
     {
@@ -1032,16 +1039,15 @@ CRichEditUI::CRichEditUI() : m_pTwh(NULL), m_bVScrollBarFixing(false), m_bWantTa
     m_bWantCtrlReturn(true), m_bRich(true), m_bReadOnly(false), m_bWordWrap(false), m_dwTextColor(0), m_iFont(-1), 
     m_iLimitText(cInitTextMax), m_lTwhStyle(ES_MULTILINE), m_bInited(false)
 {
-	DUI__Trace(L"@@@ CRichEditUI %08X", (int)this);
 }
 
 CRichEditUI::~CRichEditUI()
 {
-	DUI__Trace(L"@@@ ~CRichEditUI %08X", (int)this);
-    if( m_pTwh ) {
-        m_pTwh->Release();
-        m_pManager->RemoveMessageFilter(this);
+    if( m_pTwh )
+	{
+        m_pTwh->Release();       
     }
+	 m_pManager->RemoveMessageFilter(this);
 }
 
 LPCTSTR CRichEditUI::GetClass() const

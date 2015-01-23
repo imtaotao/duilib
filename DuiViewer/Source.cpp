@@ -34,6 +34,9 @@ int Run( void )
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpCmdLine*/, int nCmdShow)
 {
+	GdiplusStartupInput gdiplusStartupInput;
+	ULONG_PTR gdiplusToken;
+	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
     CMainFrame::s_hInstance = hInstance;
     OpenMessages(sMsg, _countof(sMsg));
     CPaintManagerUI::SetInstance(hInstance);   
