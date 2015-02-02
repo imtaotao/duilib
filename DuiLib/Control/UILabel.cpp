@@ -281,6 +281,12 @@ namespace DuiLib
 		if( m_dwTextColor == 0 ) m_dwTextColor = m_pManager->GetDefaultFontColor();
 		if( m_dwDisabledTextColor == 0 ) m_dwDisabledTextColor = m_pManager->GetDefaultDisabledColor();
 
+		DWORD dwTextColor = m_dwTextColor;
+		if (!IsEnabled())
+		{
+			dwTextColor = m_dwDisabledTextColor;
+		}
+		
 		if (m_bListItemElement)
 		{
 			CContainerUI*pParent = dynamic_cast<CContainerUI*>(m_pParent);
@@ -292,10 +298,10 @@ namespace DuiLib
 				{
 					uState |= UISTATE_DISABLED;
 				}
-				DWORD dwTextColor = pParent->GetListItemTextColor(this, uState, bHandled);
+				DWORD dwColor = pParent->GetListItemTextColor(this, uState, bHandled);
 				if (bHandled)
 				{
-					m_dwTextColor = dwTextColor;
+					dwTextColor = dwColor;
 				}
 			}
 		}
@@ -311,19 +317,15 @@ namespace DuiLib
 			int nLinks = 0;
 			if( IsEnabled() ) {
 				if( m_bShowHtml )
-					CRenderEngine::DrawHtmlText(hDC, m_pManager, rc, m_sText, m_dwTextColor, \
-					NULL, NULL, nLinks, DT_SINGLELINE | m_uTextStyle);
+					CRenderEngine::DrawHtmlText(hDC, m_pManager, rc, m_sText, dwTextColor, NULL, NULL, nLinks, DT_SINGLELINE | m_uTextStyle);
 				else
-					CRenderEngine::DrawText(hDC, m_pManager, rc, m_sText, m_dwTextColor, \
-					m_iFont, DT_SINGLELINE | m_uTextStyle);
+					CRenderEngine::DrawText(hDC, m_pManager, rc, m_sText, dwTextColor, m_iFont, DT_SINGLELINE | m_uTextStyle);
 			}
 			else {
 				if( m_bShowHtml )
-					CRenderEngine::DrawHtmlText(hDC, m_pManager, rc, m_sText, m_dwDisabledTextColor, \
-					NULL, NULL, nLinks, DT_SINGLELINE | m_uTextStyle);
+					CRenderEngine::DrawHtmlText(hDC, m_pManager, rc, m_sText, dwTextColor, NULL, NULL, nLinks, DT_SINGLELINE | m_uTextStyle);
 				else
-					CRenderEngine::DrawText(hDC, m_pManager, rc, m_sText, m_dwDisabledTextColor, \
-					m_iFont, DT_SINGLELINE | m_uTextStyle);
+					CRenderEngine::DrawText(hDC, m_pManager, rc, m_sText, dwTextColor, m_iFont, DT_SINGLELINE | m_uTextStyle);
 			}
 		}
 		else

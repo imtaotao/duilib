@@ -366,6 +366,20 @@ namespace DuiLib
 		else if( ((m_uButtonState & UISTATE_FOCUSED) != 0) && (GetFocusedTextColor() != 0) )
 			clrColor = GetFocusedTextColor();
 
+		if (m_bListItemElement)
+		{
+			CContainerUI*pParent = dynamic_cast<CContainerUI*>(m_pParent);
+			if (pParent)
+			{
+				bool bHandled = false;
+				DWORD dwTextColor = pParent->GetListItemTextColor(this, m_uButtonState, bHandled);
+				if (bHandled)
+				{
+					clrColor = dwTextColor;
+				}
+			}
+		}
+
 		if( m_bShowHtml )
 			CRenderEngine::DrawHtmlText(hDC, m_pManager, rc, m_sText, clrColor, \
 			NULL, NULL, nLinks, m_uTextStyle);
