@@ -105,6 +105,10 @@ namespace DuiLib
 
 	SIZE CTextUI::EstimateSize(SIZE szAvailable)
 	{
+		if (m_cxyFixed.cy != 0 && m_cxyFixed.cx != 0)
+		{
+			return m_cxyFixed;
+		}
 		RECT rcText = { 0, 0, MAX(szAvailable.cx, m_cxyFixed.cx), 9999 };
 		rcText.left += m_rcTextPadding.left;
 		rcText.right -= m_rcTextPadding.right;
