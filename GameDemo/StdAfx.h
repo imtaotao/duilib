@@ -19,7 +19,6 @@
 
 using namespace DuiLib;
 
-#pragma comment(lib, "DuiLib.lib")
 
 
 

@@ -183,7 +183,7 @@ void DuiLib::CWebBrowserUI::GoForward()
 	}
 }
 /// DWebBrowserEvents2
-void DuiLib::CWebBrowserUI::BeforeNavigate2( IDispatch *pDisp,VARIANT *&url,VARIANT *&Flags,VARIANT *&TargetFrameName,VARIANT *&PostData,VARIANT *&Headers,VARIANT_BOOL *&Cancel )
+void DuiLib::CWebBrowserUI::BeforeNavigate2( IDispatch *pDisp,VARIANT *url,VARIANT *Flags,VARIANT *TargetFrameName,VARIANT *PostData,VARIANT *Headers,VARIANT_BOOL *Cancel )
 {
 	if (m_pWebBrowserEventHandler)
 	{
@@ -191,7 +191,7 @@ void DuiLib::CWebBrowserUI::BeforeNavigate2( IDispatch *pDisp,VARIANT *&url,VARI
 	}
 }
 
-void DuiLib::CWebBrowserUI::NavigateError( IDispatch *pDisp,VARIANT * &url,VARIANT *&TargetFrameName,VARIANT *&StatusCode,VARIANT_BOOL *&Cancel )
+void DuiLib::CWebBrowserUI::NavigateError( IDispatch *pDisp,VARIANT * url,VARIANT *TargetFrameName,VARIANT *StatusCode,VARIANT_BOOL *Cancel )
 {
 	if (m_pWebBrowserEventHandler)
 	{
@@ -199,7 +199,7 @@ void DuiLib::CWebBrowserUI::NavigateError( IDispatch *pDisp,VARIANT * &url,VARIA
 	}
 }
 
-void DuiLib::CWebBrowserUI::NavigateComplete2( IDispatch *pDisp,VARIANT *&url )
+void DuiLib::CWebBrowserUI::NavigateComplete2( IDispatch *pDisp,VARIANT *url )
 {
 	CComPtr<IDispatch> spDoc;   
 	m_pWebBrowser2->get_Document(&spDoc);   
@@ -225,7 +225,7 @@ void DuiLib::CWebBrowserUI::ProgressChange( LONG nProgress, LONG nProgressMax )
 	}
 }
 
-void DuiLib::CWebBrowserUI::NewWindow3( IDispatch **pDisp, VARIANT_BOOL *&Cancel, DWORD dwFlags, BSTR bstrUrlContext, BSTR bstrUrl )
+void DuiLib::CWebBrowserUI::NewWindow3( IDispatch **pDisp, VARIANT_BOOL *Cancel, DWORD dwFlags, BSTR bstrUrlContext, BSTR bstrUrl )
 {
 	if (m_pWebBrowserEventHandler)
 	{

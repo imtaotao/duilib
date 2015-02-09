@@ -56,11 +56,11 @@ namespace DuiLib
 		CWebBrowserEventHandler* m_pWebBrowserEventHandler;	//浏览器事件处理
 
 		// DWebBrowserEvents2
-		void BeforeNavigate2( IDispatch *pDisp,VARIANT *&url,VARIANT *&Flags,VARIANT *&TargetFrameName,VARIANT *&PostData,VARIANT *&Headers,VARIANT_BOOL *&Cancel );
-		void NavigateError(IDispatch *pDisp,VARIANT * &url,VARIANT *&TargetFrameName,VARIANT *&StatusCode,VARIANT_BOOL *&Cancel);
-		void NavigateComplete2(IDispatch *pDisp,VARIANT *&url);
+		void BeforeNavigate2( IDispatch *pDisp,VARIANT *url,VARIANT *Flags,VARIANT *TargetFrameName,VARIANT *PostData,VARIANT *Headers,VARIANT_BOOL *Cancel );
+		void NavigateError(IDispatch *pDisp,VARIANT * url,VARIANT *TargetFrameName,VARIANT *StatusCode,VARIANT_BOOL *Cancel);
+		void NavigateComplete2(IDispatch *pDisp,VARIANT *url);
 		void ProgressChange(LONG nProgress, LONG nProgressMax);
-		void NewWindow3(IDispatch **pDisp, VARIANT_BOOL *&Cancel, DWORD dwFlags, BSTR bstrUrlContext, BSTR bstrUrl);
+		void NewWindow3(IDispatch **pDisp, VARIANT_BOOL *Cancel, DWORD dwFlags, BSTR bstrUrlContext, BSTR bstrUrl);
 		void CommandStateChange(long Command,VARIANT_BOOL Enable);
 
 	public:

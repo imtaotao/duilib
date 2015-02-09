@@ -1260,6 +1260,10 @@ namespace DuiLib {
 // #endif
 //                }
             }
+			else
+			{
+				 DUITRACE(_T("EXCEPTION: %s(%d)\n"), __FILET__, __LINE__);
+			}
         }
     }
 
@@ -2235,12 +2239,14 @@ namespace DuiLib {
         if (uChildRes != 0)
         {
             HWND hWndParent = ::GetParent(pMsg->hwnd);
-
+			UINT uTID = GetCurrentThreadId();
+			UINT uParentTID = GetWindowThreadProcessId(hWndParent, NULL);
             for( int i = 0; i < m_aPreMessages.GetSize(); i++ ) 
             {
                 CPaintManagerUI* pT = static_cast<CPaintManagerUI*>(m_aPreMessages[i]);        
                 HWND hTempParent = hWndParent;
-                while(hTempParent)
+				UINT uParentTID = GetWindowThreadProcessId(hTempParent, NULL);
+                while(hTempParent && uParentTID == uTID)
                 {
                     if(pMsg->hwnd == pT->GetPaintWindow() || hTempParent == pT->GetPaintWindow())
                     {
@@ -2253,6 +2259,14 @@ namespace DuiLib {
                         return false;
                     }
                     hTempParent = GetParent(hTempParent);
+					if (hTempParent)
+					{
+						uParentTID = GetWindowThreadProcessId(hTempParent, NULL);
+					}
+					else
+					{
+						uParentTID = 0;
+					}					
                 }
             }
         }
