@@ -2468,7 +2468,7 @@ namespace DuiLib {
 		if (s_mapThreadData.find(uTid) == s_mapThreadData.end())
 		{
 			std::shared_ptr<ThreadData>pData(new(std::nothrow) ThreadData());
-			s_mapThreadData[uTid] == pData;
+			s_mapThreadData[uTid] = pData;
 		}
 		return s_mapThreadData[uTid];
 	}
