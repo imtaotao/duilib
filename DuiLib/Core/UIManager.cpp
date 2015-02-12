@@ -97,10 +97,11 @@ namespace DuiLib {
     short CPaintManagerUI::m_H = 180;
     short CPaintManagerUI::m_S = 100;
     short CPaintManagerUI::m_L = 100;
-    CStdPtrArray CPaintManagerUI::m_aPreMessages;
-    CStdPtrArray CPaintManagerUI::m_aPlugins;
     Func_LoadResource CPaintManagerUI::s_ResourceLoader = nullptr;
-
+	ATL::CComAutoCriticalSection CPaintManagerUI::s_csPlugins;
+	CStdPtrArray CPaintManagerUI::s_aPlugins;
+	ATL::CComAutoCriticalSection CPaintManagerUI::s_cs;
+	std::map<UINT, std::shared_ptr<ThreadData>>CPaintManagerUI::s_mapThreadData;
     CPaintManagerUI::CPaintManagerUI() :
         m_hWndPaint(NULL),
         m_hDcPaint(NULL),
@@ -189,7 +190,19 @@ namespace DuiLib {
         if( m_hbmpOffscreen != NULL ) ::DeleteObject(m_hbmpOffscreen);
         if( m_hbmpBackground != NULL ) ::DeleteObject(m_hbmpBackground);
         if( m_hDcPaint != NULL ) ::ReleaseDC(m_hWndPaint, m_hDcPaint);
-        m_aPreMessages.Remove(m_aPreMessages.Find(this));
+
+		{
+			ATL::CComCritSecLock<ATL::CComAutoCriticalSection>_(s_cs);
+			for (auto it = s_mapThreadData.begin(); it != s_mapThreadData.end(); it ++)
+			{
+				std::shared_ptr<ThreadData>pData = it->second;
+				if (!pData)
+				{
+					continue;
+				}
+				pData->m_aPreMessages.Remove(pData->m_aPreMessages.Find(this));
+			}
+		}
     }
 
     void CPaintManagerUI::Init(HWND hWnd)
@@ -199,7 +212,11 @@ namespace DuiLib {
         m_hWndPaint = hWnd;
         m_hDcPaint = ::GetDC(hWnd);
         // We'll want to filter messages globally too
-        m_aPreMessages.Add(this);
+		std::shared_ptr<ThreadData>pData = GetThreadData();
+		if (pData)
+		{
+			pData->m_aPreMessages.Add(this);
+		}
     }
 
     HINSTANCE CPaintManagerUI::GetInstance()
@@ -317,41 +334,77 @@ namespace DuiLib {
         m_H = CLAMP(H, 0, 360);
         m_S = CLAMP(S, 0, 200);
         m_L = CLAMP(L, 0, 200);
-        for( int i = 0; i < m_aPreMessages.GetSize(); i++ ) {
-            CPaintManagerUI* pManager = static_cast<CPaintManagerUI*>(m_aPreMessages[i]);
-            if( pManager != NULL && pManager->GetRoot() != NULL )
-                pManager->GetRoot()->Invalidate();
-        }
-    }
+		std::shared_ptr<ThreadData>pData = GetThreadData();
+		if (pData)
+		{
+			for( int i = 0; i < pData->m_aPreMessages.GetSize(); i++ ) 
+			{
+				CPaintManagerUI* pManager = static_cast<CPaintManagerUI*>(pData->m_aPreMessages[i]);
+				if( pManager != NULL && pManager->GetRoot() != NULL )
+				{
+					pManager->GetRoot()->Invalidate();
+				}
+			}
+		}
+	}
 
     void CPaintManagerUI::ReloadSkin()
     {
-        for( int i = 0; i < m_aPreMessages.GetSize(); i++ ) {
-            CPaintManagerUI* pManager = static_cast<CPaintManagerUI*>(m_aPreMessages[i]);
-            pManager->ReloadAllImages();
-        }
+		std::shared_ptr<ThreadData>pData = GetThreadData();
+		if (pData)
+		{
+			for( int i = 0; i < pData->m_aPreMessages.GetSize(); i++ ) 
+			{
+				CPaintManagerUI* pManager = static_cast<CPaintManagerUI*>(pData->m_aPreMessages[i]);
+				pManager->ReloadAllImages();
+			}
+		}
     }
+	bool CPaintManagerUI::LoadPlugin(LPCTSTR pstrModuleName)
+	{
+		ASSERT( !::IsBadStringPtr(pstrModuleName,-1) || pstrModuleName == NULL );
+		if( pstrModuleName == NULL ) return false;
+		HMODULE hModule = ::LoadLibrary(pstrModuleName);
+		if( !hModule) 
+		{
+			return false;
+		}		
+		LPCREATECONTROL lpCreateControl = (LPCREATECONTROL)::GetProcAddress(hModule, "CreateControl");
+		if( !lpCreateControl) 
+		{
+			return false;
+		}
+		ATL::CComCritSecLock<ATL::CComAutoCriticalSection>_(s_csPlugins);
+		if( s_aPlugins.Find(lpCreateControl) >= 0 )
+		{
+			return true;
+		}
+		s_aPlugins.Add(lpCreateControl);
+		return true;		
+	}
 
-    bool CPaintManagerUI::LoadPlugin(LPCTSTR pstrModuleName)
-    {
-        ASSERT( !::IsBadStringPtr(pstrModuleName,-1) || pstrModuleName == NULL );
-        if( pstrModuleName == NULL ) return false;
-        HMODULE hModule = ::LoadLibrary(pstrModuleName);
-        if( hModule != NULL ) {
-            LPCREATECONTROL lpCreateControl = (LPCREATECONTROL)::GetProcAddress(hModule, "CreateControl");
-            if( lpCreateControl != NULL ) {
-                if( m_aPlugins.Find(lpCreateControl) >= 0 ) return true;
-                m_aPlugins.Add(lpCreateControl);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    CStdPtrArray* CPaintManagerUI::GetPlugins()
-    {
-        return &m_aPlugins;
-    }
+	CControlUI* CPaintManagerUI::CreatePluginsControl(LPCTSTR pstrClass)
+	{
+		if (!pstrClass || !*pstrClass)
+		{
+			return NULL;
+		}
+		ATL::CComCritSecLock<ATL::CComAutoCriticalSection>_(s_csPlugins);
+		LPCREATECONTROL lpCreateControl = NULL;
+		for( int i = 0; i < s_aPlugins.GetSize(); ++i )
+		{
+			lpCreateControl = (LPCREATECONTROL)s_aPlugins.GetAt(i);
+			if( lpCreateControl != NULL )
+			{
+				CControlUI*pControl = lpCreateControl(pstrClass);
+				if( pControl != NULL )
+				{
+					return pControl;
+				}
+			}
+		}		
+		return NULL;
+	}
 
     HWND CPaintManagerUI::GetPaintWindow() const
     {
@@ -2236,14 +2289,15 @@ namespace DuiLib {
         UINT uStyle = GetWindowStyle(pMsg->hwnd);
         UINT uChildRes = uStyle & WS_CHILD;	
         LRESULT lRes = 0;
+		std::shared_ptr<ThreadData>pData = GetThreadData();		
         if (uChildRes != 0)
         {
             HWND hWndParent = ::GetParent(pMsg->hwnd);
 			UINT uTID = GetCurrentThreadId();
 			UINT uParentTID = GetWindowThreadProcessId(hWndParent, NULL);
-            for( int i = 0; i < m_aPreMessages.GetSize(); i++ ) 
+            for( int i = 0; i < pData->m_aPreMessages.GetSize(); i++ ) 
             {
-                CPaintManagerUI* pT = static_cast<CPaintManagerUI*>(m_aPreMessages[i]);        
+                CPaintManagerUI* pT = static_cast<CPaintManagerUI*>(pData->m_aPreMessages[i]);        
                 HWND hTempParent = hWndParent;
 				UINT uParentTID = GetWindowThreadProcessId(hTempParent, NULL);
                 while(hTempParent && uParentTID == uTID)
@@ -2272,9 +2326,9 @@ namespace DuiLib {
         }
         else
         {
-            for( int i = 0; i < m_aPreMessages.GetSize(); i++ ) 
+            for( int i = 0; i < pData->m_aPreMessages.GetSize(); i++ ) 
             {
-                CPaintManagerUI* pT = static_cast<CPaintManagerUI*>(m_aPreMessages[i]);
+                CPaintManagerUI* pT = static_cast<CPaintManagerUI*>(pData->m_aPreMessages[i]);
                 if(pMsg->hwnd == pT->GetPaintWindow())
                 {
                     if (pT->TranslateAccelerator(pMsg))
@@ -2403,5 +2457,34 @@ namespace DuiLib {
         *pVoid = pByte;
         return (int)dwSize;
     }
+
+	std::shared_ptr<ThreadData> CPaintManagerUI::GetThreadData(UINT uTid /*= 0*/)
+	{
+		if (!uTid)
+		{
+			uTid = GetCurrentThreadId();
+		}
+		ATL::CComCritSecLock<ATL::CComAutoCriticalSection>_(s_cs);
+		if (s_mapThreadData.find(uTid) == s_mapThreadData.end())
+		{
+			std::shared_ptr<ThreadData>pData(new(std::nothrow) ThreadData());
+			s_mapThreadData[uTid] == pData;
+		}
+		return s_mapThreadData[uTid];
+	}
+
+	std::shared_ptr<ThreadData> CPaintManagerUI::GetExistThreadData(UINT uTid /*= 0*/)
+	{
+		if (!uTid)
+		{
+			uTid = GetCurrentThreadId();
+		}
+		ATL::CComCritSecLock<ATL::CComAutoCriticalSection>_(s_cs);
+		if (s_mapThreadData.find(uTid) == s_mapThreadData.end())
+		{
+			return std::shared_ptr<ThreadData>();
+		}
+		return s_mapThreadData[uTid];
+	}
 
 } // namespace DuiLib

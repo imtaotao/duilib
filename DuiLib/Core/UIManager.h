@@ -2,7 +2,10 @@
 #define __UIMANAGER_H__
 
 #pragma once
-
+#include <atlcore.h>
+#include <memory>
+#include <map>
+using namespace std;
 namespace DuiLib {
 /////////////////////////////////////////////////////////////////////////////////////
 //
@@ -128,6 +131,16 @@ typedef struct tagTRelativePosUI
 	int nZoomYPercent;
 }TRelativePosUI;
 
+class ThreadData
+{
+public:
+	ThreadData()
+	{
+
+	}
+public:
+	CStdPtrArray m_aPreMessages;	
+};
 // Listener interface
 class INotifyUI
 {
@@ -211,7 +224,7 @@ public:
     static void SetHSL(bool bUseHSL, short H, short S, short L); // H:0~360, S:0~200, L:0~200 
     static void ReloadSkin();
     static bool LoadPlugin(LPCTSTR pstrModuleName);
-    static CStdPtrArray* GetPlugins();
+    static CControlUI* CreatePluginsControl(LPCTSTR);
 
     bool UseParentResource(CPaintManagerUI* pm);
     CPaintManagerUI* GetParentResource() const;
@@ -320,6 +333,8 @@ public:
     bool PreMessageHandler(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lRes);
 	void UsedVirtualWnd(bool bUsed);
 
+	static std::shared_ptr<ThreadData>GetThreadData(UINT uTid = 0);
+	static std::shared_ptr<ThreadData>GetExistThreadData(UINT uTid = 0);
 private:
     static CControlUI* CALLBACK __FindControlFromNameHash(CControlUI* pThis, LPVOID pData);
     static CControlUI* CALLBACK __FindControlFromCount(CControlUI* pThis, LPVOID pData);
@@ -400,9 +415,10 @@ private:
     static short m_H;
     static short m_S;
     static short m_L;
-    static CStdPtrArray m_aPreMessages;
-    static CStdPtrArray m_aPlugins;
-
+	static ATL::CComAutoCriticalSection s_cs;
+	static std::map<UINT, std::shared_ptr<ThreadData>>s_mapThreadData;
+	static ATL::CComAutoCriticalSection s_csPlugins;
+	static CStdPtrArray s_aPlugins;
 public:
 	static CDuiString m_pStrDefaultFontName;
 	CStdPtrArray m_aTranslateAccelerator;

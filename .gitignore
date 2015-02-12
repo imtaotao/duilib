@@ -40,3 +40,7 @@ bin/MenuDemo.exe
 360SafeDemo/Debug/360Safe.bsc
 *.bsc
 *.bsc
+bin/DuiLib_lib_md.lib
+bin/DuiLib_lib_mdd.lib
+bin/DuiLib_lib_mt.lib
+bin/DuiLib_lib_mtd.lib
